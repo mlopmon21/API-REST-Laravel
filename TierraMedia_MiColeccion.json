@@ -1,0 +1,505 @@
+{
+  "info": {
+    "name": "Tierra Media API REST - Completa (estándar + opcionales)",
+    "description": "Colección completa para probar endpoints REST estándar + opcionales (artifact-hero, alive, dangerous, top, etc.) en orden seguro.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+    { "key": "region_id", "value": "" },
+    { "key": "realm_id", "value": "" },
+    { "key": "hero_id", "value": "" },
+    { "key": "creature_id", "value": "" },
+    { "key": "artifact_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "POST Region",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/regions",
+        "body": { "mode": "raw", "raw": "{ \"name\": \"Region_Test\" }" }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('POST Region status 201/200', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('region_id', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET Region by ID",
+      "request": { "method": "GET", "url": "{{base_url}}/regions/{{region_id}}" },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": ["pm.test('GET Region by ID 200', () => pm.expect(pm.response.code).to.eql(200));"] }
+        }
+      ]
+    },
+    {
+      "name": "PUT Region",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/regions/{{region_id}}",
+        "body": { "mode": "raw", "raw": "{ \"name\": \"Region_Test_Updated\" }" }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": ["pm.test('PUT Region 200', () => pm.expect(pm.response.code).to.eql(200));"] }
+        }
+      ]
+    },
+    {
+      "name": "GET Regions",
+      "request": { "method": "GET", "url": "{{base_url}}/regions" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('GET Regions 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+
+    {
+      "name": "POST Realm",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/realms",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Realm_Test\", \"ruler\": \"King\", \"alignment\": \"Neutral\", \"region_id\": {{region_id}} }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('POST Realm status 201/200', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('realm_id', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET Realm by ID (incluye region, heroes, artifacts)",
+      "request": { "method": "GET", "url": "{{base_url}}/realms/{{realm_id}}" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET Realm by ID 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "const realm = pm.response.json();",
+              "pm.test('Realm tiene campos básicos', () => {",
+              "  pm.expect(realm.id).to.eql(parseInt(pm.collectionVariables.get('realm_id')));",
+              "  pm.expect(realm.name).to.be.a('string');",
+              "  pm.expect(realm.ruler).to.be.a('string');",
+              "});",
+              "pm.test('Realm incluye region', () => {",
+              "  pm.expect(realm.region).to.be.an('object');",
+              "  pm.expect(realm.region.id).to.be.a('number');",
+              "});",
+              "pm.test('Realm incluye heroes y artifacts (arrays)', () => {",
+              "  pm.expect(realm.heroes).to.be.an('array');",
+              "  pm.expect(realm.artifacts).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT Realm",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/realms/{{realm_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Realm_Test_Updated\", \"ruler\": \"New King\", \"alignment\": \"Neutral\", \"region_id\": {{region_id}} }"
+        }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('PUT Realm 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "GET Realms",
+      "request": { "method": "GET", "url": "{{base_url}}/realms" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('GET Realms 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "GET Realms/{id}/heroes (opcional)",
+      "request": { "method": "GET", "url": "{{base_url}}/realms/{{realm_id}}/heroes" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET Realms/{id}/heroes 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test('devuelve array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "POST Hero",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/heroes",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Hero_Test\", \"race\": \"Humano\", \"rank\": \"Explorador\", \"realm_id\": {{realm_id}}, \"alive\": true }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('POST Hero status 201/200', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('hero_id', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET Hero by ID (incluye realm y artifacts)",
+      "request": { "method": "GET", "url": "{{base_url}}/heroes/{{hero_id}}" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET Hero by ID 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "const hero = pm.response.json();",
+              "pm.test('Hero campos básicos', () => {",
+              "  pm.expect(hero.id).to.eql(parseInt(pm.collectionVariables.get('hero_id')));",
+              "  pm.expect(hero.name).to.be.a('string');",
+              "  pm.expect(hero.race).to.be.a('string');",
+              "});",
+              "pm.test('Hero incluye realm', () => {",
+              "  pm.expect(hero.realm).to.be.an('object');",
+              "  pm.expect(hero.realm.id).to.be.a('number');",
+              "});",
+              "pm.test('Hero incluye artifacts (array)', () => {",
+              "  pm.expect(hero.artifacts).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT Hero",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/heroes/{{hero_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Hero_Test_Updated\", \"race\": \"Humano\", \"rank\": \"Capitán\", \"realm_id\": {{realm_id}}, \"alive\": true }"
+        }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('PUT Hero 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "GET Heroes",
+      "request": { "method": "GET", "url": "{{base_url}}/heroes" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('GET Heroes 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "GET Heroes/alive (opcional)",
+      "request": { "method": "GET", "url": "{{base_url}}/heroes/alive" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET heroes/alive 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test('devuelve array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "POST Creature",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/creatures",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Creature_Test\", \"species\": \"Bestia\", \"threat_level\": 5, \"region_id\": {{region_id}} }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('POST Creature status 201/200', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('creature_id', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET Creature by ID (incluye region)",
+      "request": { "method": "GET", "url": "{{base_url}}/creatures/{{creature_id}}" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET Creature by ID 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "const creature = pm.response.json();",
+              "pm.test('Creature campos básicos', () => {",
+              "  pm.expect(creature.id).to.eql(parseInt(pm.collectionVariables.get('creature_id')));",
+              "  pm.expect(creature.name).to.be.a('string');",
+              "  pm.expect(creature.threat_level).to.be.within(1,10);",
+              "});",
+              "pm.test('Creature incluye region', () => {",
+              "  pm.expect(creature.region).to.be.an('object');",
+              "  pm.expect(creature.region.id).to.be.a('number');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT Creature",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/creatures/{{creature_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Creature_Test_Updated\", \"species\": \"Bestia\", \"threat_level\": 8, \"region_id\": {{region_id}} }"
+        }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('PUT Creature 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "GET Creatures",
+      "request": { "method": "GET", "url": "{{base_url}}/creatures" }
+    },
+    {
+      "name": "GET Regions/{id}/creatures (opcional)",
+      "request": { "method": "GET", "url": "{{base_url}}/regions/{{region_id}}/creatures" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET regions/{id}/creatures 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test('devuelve array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET Creatures/dangerous?level=8 (opcional)",
+      "request": { "method": "GET", "url": "{{base_url}}/creatures/dangerous?level=8" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET creatures/dangerous 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test('devuelve array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "POST Artifact (incluye hero_id)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/artifacts",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Artifact_Test\", \"type\": \"Espada\", \"origin_realm_id\": {{realm_id}}, \"power_level\": 75, \"description\": \"Espada legendaria\", \"hero_id\": {{hero_id}} }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('POST Artifact status 201/200', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));",
+              "const json = pm.response.json();",
+              "pm.collectionVariables.set('artifact_id', json.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET Artifact by ID (incluye origin_realm y heroes)",
+      "request": { "method": "GET", "url": "{{base_url}}/artifacts/{{artifact_id}}" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET Artifact by ID 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "const artifact = pm.response.json();",
+              "pm.test('Artifact campos básicos', () => {",
+              "  pm.expect(artifact.id).to.eql(parseInt(pm.collectionVariables.get('artifact_id')));",
+              "  pm.expect(artifact.name).to.be.a('string');",
+              "  pm.expect(artifact.power_level).to.be.within(1,100);",
+              "});",
+              "pm.test('Artifact incluye origin_realm y heroes', () => {",
+              "  pm.expect(artifact.origin_realm).to.be.an('object');",
+              "  pm.expect(artifact.heroes).to.be.an('array');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT Artifact",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/artifacts/{{artifact_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Artifact_Test_Updated\", \"type\": \"Espada\", \"origin_realm_id\": {{realm_id}}, \"power_level\": 95, \"description\": \"Actualizado\" }"
+        }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('PUT Artifact 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "GET Artifacts",
+      "request": { "method": "GET", "url": "{{base_url}}/artifacts" }
+    },
+    {
+      "name": "GET Artifacts/top (opcional)",
+      "request": { "method": "GET", "url": "{{base_url}}/artifacts/top" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('GET artifacts/top 200', () => pm.expect(pm.response.code).to.eql(200));",
+              "pm.test('devuelve array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "POST artifact-hero (opcional asignar)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/artifact-hero",
+        "body": { "mode": "raw", "raw": "{ \"artifact_id\": {{artifact_id}}, \"hero_id\": {{hero_id}} }" }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('POST artifact-hero 201/200', () => pm.expect(pm.response.code).to.be.oneOf([200,201]));"] } }
+      ]
+    },
+    {
+      "name": "GET Heroes/{id}/artifacts (opcional)",
+      "request": { "method": "GET", "url": "{{base_url}}/heroes/{{hero_id}}/artifacts" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('GET hero artifacts 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "GET Artifacts/{id}/heroes (opcional)",
+      "request": { "method": "GET", "url": "{{base_url}}/artifacts/{{artifact_id}}/heroes" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('GET artifact heroes 200', () => pm.expect(pm.response.code).to.eql(200));"] } }
+      ]
+    },
+    {
+      "name": "DELETE artifact-hero (opcional retirar)",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/artifact-hero",
+        "body": { "mode": "raw", "raw": "{ \"artifact_id\": {{artifact_id}}, \"hero_id\": {{hero_id}} }" }
+      },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('DELETE artifact-hero 204', () => pm.expect(pm.response.code).to.eql(204));"] } }
+      ]
+    },
+
+    {
+      "name": "DELETE Artifact",
+      "request": { "method": "DELETE", "url": "{{base_url}}/artifacts/{{artifact_id}}" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('DELETE Artifact 204', () => pm.expect(pm.response.code).to.eql(204));"] } }
+      ]
+    },
+    {
+      "name": "DELETE Creature",
+      "request": { "method": "DELETE", "url": "{{base_url}}/creatures/{{creature_id}}" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('DELETE Creature 204', () => pm.expect(pm.response.code).to.eql(204));"] } }
+      ]
+    },
+    {
+      "name": "DELETE Hero",
+      "request": { "method": "DELETE", "url": "{{base_url}}/heroes/{{hero_id}}" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('DELETE Hero 204', () => pm.expect(pm.response.code).to.eql(204));"] } }
+      ]
+    },
+    {
+      "name": "DELETE Realm",
+      "request": { "method": "DELETE", "url": "{{base_url}}/realms/{{realm_id}}" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('DELETE Realm 204', () => pm.expect(pm.response.code).to.eql(204));"] } }
+      ]
+    },
+    {
+      "name": "DELETE Region",
+      "request": { "method": "DELETE", "url": "{{base_url}}/regions/{{region_id}}" },
+      "event": [
+        { "listen": "test", "script": { "exec": ["pm.test('DELETE Region 204', () => pm.expect(pm.response.code).to.eql(204));"] } }
+      ]
+    }
+  ]
+}

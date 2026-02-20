@@ -15,5 +15,20 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
-    })->create();
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Resource not found',
+                ], 404);
+            }
+        });
+
+        $exceptions->render(function (\Throwable $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Server error',
+                ], 500);
+            }
+        });
+    })
+    ->create();
